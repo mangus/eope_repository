@@ -3,6 +3,7 @@
 /**
  * Moodle repository plugin for http://e-ope.ee/repositoorium
  * @author Mart Mangus
+ * @license GPL
  */
 
 class repository_eope_repository extends repository {
@@ -48,7 +49,7 @@ class repository_eope_repository extends repository {
                     break;
                 case 'my_entries':
                     $this->listing_my($paths);
-                    break;                    
+                    break;              
                 case 'search':
                     $this->listing_search($paths);
                     break;
@@ -87,38 +88,57 @@ class repository_eope_repository extends repository {
     }
     private function listing_my($paths) {
         //TODO
+        switch (count($paths)) {
+            case 1:
+                $itemslist = array(
+                    array('title' => 'Minu sissekanne 1',
+                        'path' => 'my_entries/entry_id=123',
+                        'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                        'children' => array()),
+                    array('title' => 'Minu sissekanne 2',
+                        'path' => 'my_entries/entry_id=124',
+                        'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                        'children' => array())
+                );
+                break;
+            case 2:
+                $itemslist = array(
+                    array('title'=>'Minu fail 1.zip .html',
+                        'thumbnail'=>'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=icon&rev=217&component=repository_eope_repository#TODO-FIX-THIS',
+                        'source'=>'http://e-ope.ee/_download/euni_repository/file/821/kameerika.zip'),
+                    array('title'=>'Minu fail 2.zip .html',
+                        'thumbnail'=>'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=icon&rev=217&component=repository_eope_repository#TODO-FIX-THIS',
+                        'source'=>'http://e-ope.ee/_download/euni_repository/file/821/kameerika.zip')
+                );
+                break;
+            default:
+                throw new Exception('Error: Such path is not supported');
+        }
+        $this->listing['list'] = $itemslist;
     }
     private function listing_search($paths) {
         //TODO
+        $itemslist = array(
+            array('title' => 'Otsingu tulemus 1',
+                'path' => 'search/...',
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                'children' => array()),
+            array('title' => 'Otsingu tulemus 2',
+                'path' => 'search/...',
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                'children' => array())
+        );
+        $this->listing['list'] = $itemslist;
     }
 
     private function get_current_listing() {
         return $this->listing;
     }
 
-    /* TODO
-
     public function search($text) {
-        $search_result = array();
-        // search result listing's format is the same as 
-        // file listing
-        $search_result['list'] = array();
-        return $search_result;
+        $this->listing_search(array('search', "search_string=$text"));
+        return $this->get_current_listing();
     }
-
-
-    public function search($search_text) {
-        $space = optional_param('space', 'workspace://SpacesStore', PARAM_RAW);
-        $currentStore = $this->user_session->getStoreFromString($space);
-        $nodes = $this->user_session->query($currentStore, $search_text);
-        $ret = array();
-        $ret['list'] = array();
-        foreach($nodes as $v) {
-            $ret['list'][] = array('title'=>$v->cm_name, 'source'=>$v->id);
-        }
-        return $ret;
-    }
-    */
 
     // will be called when installing a new plugin in admin panel
     /*
