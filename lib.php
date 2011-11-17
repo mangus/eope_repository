@@ -144,7 +144,7 @@ class repository_eope_repository extends repository {
 
         // Building path
         $this->listing['path'] []= 
-            array('name' => get_string('my_entries', 'repository_eope_repository'), 'path' => 'my_entries/');
+            array('name' => get_string('my_entries', 'repository_eope_repository'), 'path' => 'my_entries');
         if ($depth > 1) {
             $this->listing['path'] []= 
                 array('name' => 'Entry Name', 'path' => 'my_entries/' . $paths[1]);
