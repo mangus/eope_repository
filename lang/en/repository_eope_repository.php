@@ -12,3 +12,7 @@ $string['repository'] = 'Repository'; // Repositoorium
 $string['all_entries'] = 'All entries'; // Kõik sissekanded
 $string['my_entries'] = 'My entries'; // Minu sissekanded
 
+$string['search'] = 'Search';
+$string['author'] = 'Author';
+$string['authors'] = 'Authors';
+

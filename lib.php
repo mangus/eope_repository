@@ -38,9 +38,6 @@ class repository_eope_repository extends repository {
      */
     public function get_listing($path='', $page='') {
 
-        //global $USER;
-        //$USER->email;
-
         $this->listing['path'] = array(
             array('name' => get_string('repository', 'repository_eope_repository'),'path' => '')
         );
@@ -103,8 +100,9 @@ class repository_eope_repository extends repository {
                 $composedlist = $this->list_files($paths[2]);
                 break;
             default:
-                throw new Exception('Error: This depth level is not defined: ' . $depth);
+                throw new Exception('Error: This depth level is not defined (all): ' . $depth);
         }
+        $this->listing['list'] = $composedlist;
 
         // Building path
         $this->listing['path'] []= 
@@ -116,37 +114,41 @@ class repository_eope_repository extends repository {
                 $this->listing['path'] []= 
                     array('name' => 'Entry Name', 'path' => 'all_entries/' . $paths[1] . '/' . $paths[2]);
         }
-        $this->listing['list'] = $composedlist;
     }
+
+
+    /**
+     * @param $paths
+     *   [1] -- entry ID
+     */
     private function listing_my($paths) {
-        //TODO
-        switch (count($paths)) {
+        global $USER;
+        $composedlist = array();
+        $depth = count($paths);
+        switch ($depth)
+        {
             case 1:
-                $itemslist = array(
-                    array('title' => 'Minu sissekanne 1',
-                        'path' => 'my_entries/entry_id=123',
-                        'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
-                        'children' => array()),
-                    array('title' => 'Minu sissekanne 2',
-                        'path' => 'my_entries/entry_id=124',
-                        'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
-                        'children' => array())
-                );
+                $encoded = file_get_contents(self::apiurl . 'user-entries?IK=' . $USER->idnumber);
+                $entries = json_decode($encoded, true);
+                $composedlist = $this->list_entries($entries, 'my_entries/', true);
                 break;
+
             case 2:
-                $itemslist = array(
-                    array('title'=>'Minu fail 1.zip .html',
-                        'thumbnail'=>'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=icon&rev=217&component=repository_eope_repository#TODO-FIX-THIS',
-                        'source'=>'http://e-ope.ee/_download/euni_repository/file/821/kameerika.zip'),
-                    array('title'=>'Minu fail 2.zip .html',
-                        'thumbnail'=>'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=icon&rev=217&component=repository_eope_repository#TODO-FIX-THIS',
-                        'source'=>'http://e-ope.ee/_download/euni_repository/file/821/kameerika.zip')
-                );
+                $composedlist = $this->list_files($paths[2]);
                 break;
+
             default:
-                throw new Exception('Error: Such path is not supported');
+                throw new Exception('Error: This depth level is not defined (my): ' . $depth);
         }
-        $this->listing['list'] = $itemslist;
+        $this->listing['list'] = $composedlist;
+
+        // Building path
+        $this->listing['path'] []= 
+            array('name' => get_string('my_entries', 'repository_eope_repository'), 'path' => 'my_entries/');
+        if ($depth > 1) {
+            $this->listing['path'] []= 
+                array('name' => 'Entry Name', 'path' => 'my_entries/' . $paths[1]);
+        }
     }
 
     /**
@@ -171,7 +173,17 @@ class repository_eope_repository extends repository {
                 break;
 
             default:
-                throw new Exception('Error: This depth level (2) is not defined: ' . $depth);
+                throw new Exception('Error: This depth level is not defined (search): ' . $depth);
+        }
+        $this->listing['list'] = $composedlist;
+
+        // Building path
+        $this->listing['path'] []= 
+            array('name' => get_string('search', 'repository_eope_repository') . ' "' . $paths[1] . '"',
+                'path' => 'search/' . $paths[1]);
+        if ($depth > 2) {
+            $this->listing['path'] []= 
+                array('name' => 'Entry Name', 'path' => 'search/' . $paths[1] . '/' . $paths[2]);
         }
     }
 
@@ -179,11 +191,19 @@ class repository_eope_repository extends repository {
         return $this->listing;
     }
 
-    private function list_entries($entries, $path)
+    private function list_entries($entries, $path, $skipauthor = false)
     {
+        $composedlist = array();
         foreach ($entries as $id => $entry) {
+            $title = $entry['title'];
+            if (!$skipauthor)
+                $title .= ' (' .
+                    (count($entry['authors']) == 1
+                        ? get_string('author', 'repository_eope_repository')
+                        : get_string('authors', 'repository_eope_repository')
+                    ) . ': ' . implode(', ', $entry['authors']) . ')';
             $composedlist[] = array(
-                'title' => $entry['title'], //TODO: list authors
+                'title' => $title,
                 'path' => $path . $id,
                 'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
                 'children' => array()
@@ -220,7 +240,7 @@ class repository_eope_repository extends repository {
     }
 
     public function search($text) {
-        $this->listing_search(array('search', '$text'));
+        $this->get_listing('search/' . $text);
         return $this->get_current_listing();
     }
 
