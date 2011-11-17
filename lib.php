@@ -8,6 +8,7 @@
 
 class repository_eope_repository extends repository {
 
+    const apiurl = 'http://www.e-ope.ee/_download/euni_repository/api/';
     private $listing = array(
         'nologin' => true,
         'dynload' => true
@@ -31,13 +32,18 @@ class repository_eope_repository extends repository {
     /**
      * @arg $path
      * Possible paths:
-     *   all_entries/school_id=123/entry_id=123
-     *   my_entries/entry_id=123
-     *   search/search_string=findme/entry_id=123
+     *   all_entries/<school_id>/<entry_id>
+     *   my_entries/<entry_id>
+     *   search/<search_string>/<entry_id>
      */
     public function get_listing($path='', $page='') {
+
         //global $USER;
         //$USER->email;
+
+        $this->listing['path'] = array(
+            array('name' => get_string('repository', 'repository_eope_repository'),'path' => '')
+        );
 
         if ($path == '') {
             $this->listing_start();
@@ -61,30 +67,56 @@ class repository_eope_repository extends repository {
     }
 
     private function listing_start() {
-        $this->listing['path'] = array(
-            array('name' => get_string('repository', 'repository_eope_repository'),'path' => '/')
-        );
-
         $itemslist = array(
             array('title' => get_string('my_entries', 'repository_eope_repository'),
                 'path' => 'my_entries',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
                 'children' => array()),
             array('title' => get_string('all_entries', 'repository_eope_repository'),
                 'path' => 'all_entries',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
                 'children' => array())
         );
         $this->listing['list'] = $itemslist;
     }
 
+    /**
+     * @param $paths
+     *   [1] -- school ID
+     *   [2] -- entry ID
+     */
     private function listing_all($paths) {
-        //TODO
-            /*
-            array('title'=>'Test File.zip .html',
-                'thumbnail'=>'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=icon&rev=217&component=repository_eope_repository#TODO-FIX-THIS',
-                'source'=>'http://e-ope.ee/_download/euni_repository/file/821/kameerika.zip'),
-            */
+        $composedlist = array();
+        $depth = count($paths);
+        switch ($depth) {
+            case 1:
+                $encoded = file_get_contents(self::apiurl . 'list-schools');
+                $schools = json_decode($encoded, true);
+                $composedlist = $this->list_schools($schools);
+                break;
+            case 2:
+                $encoded = file_get_contents(self::apiurl . 'school-entries?school_id=' . intval($paths[1]));
+                $entries = json_decode($encoded, true);
+                $composedlist = $this->list_entries($entries, 'all_entries/' . $paths[1] . '/');
+                break;
+            case 3:
+                $composedlist = $this->list_files($paths[2]);
+                break;
+            default:
+                throw new Exception('Error: This depth level is not defined: ' . $depth);
+        }
+
+        // Building path
+        $this->listing['path'] []= 
+            array('name' => get_string('all_entries', 'repository_eope_repository'), 'path' => 'all_entries');
+        if ($depth > 1) {
+            $this->listing['path'] []= 
+                array('name' => 'School Name', 'path' => 'all_entries/' . $paths[1]);
+            if ($depth > 2)
+                $this->listing['path'] []= 
+                    array('name' => 'Entry Name', 'path' => 'all_entries/' . $paths[1] . '/' . $paths[2]);
+        }
+        $this->listing['list'] = $composedlist;
     }
     private function listing_my($paths) {
         //TODO
@@ -116,29 +148,94 @@ class repository_eope_repository extends repository {
         }
         $this->listing['list'] = $itemslist;
     }
+
+    /**
+     * @param $paths
+     *   [1] -- search string
+     *   [2] -- entry ID
+     */
     private function listing_search($paths) {
-        //TODO
-        $itemslist = array(
-            array('title' => 'Otsingu tulemus 1',
-                'path' => 'search/...',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
-                'children' => array()),
-            array('title' => 'Otsingu tulemus 2',
-                'path' => 'search/...',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217#TODO-FIX-THIS',
-                'children' => array())
-        );
-        $this->listing['list'] = $itemslist;
+
+        $composedlist = array();
+        $depth = count($paths);
+        switch ($depth)
+        {
+            case 2:
+                $encoded = file_get_contents(self::apiurl . 'search?text=' . $paths[1]);
+                $entries = json_decode($encoded, true);
+                $composedlist = $this->list_entries($entries, 'search/' . $paths[1] . '/');
+                break;
+
+            case 3:
+                $composedlist = $this->list_files($paths[2]);
+                break;
+
+            default:
+                throw new Exception('Error: This depth level (2) is not defined: ' . $depth);
+        }
     }
 
     private function get_current_listing() {
         return $this->listing;
     }
 
+    private function list_entries($entries, $path)
+    {
+        foreach ($entries as $id => $entry) {
+            $composedlist[] = array(
+                'title' => $entry['title'], //TODO: list authors
+                'path' => $path . $id,
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'children' => array()
+            );
+        }
+        return $composedlist;
+    }
+
+    private function list_schools($schools)
+    {
+        foreach ($schools as $id => $schoolname) {
+            $composedlist[] = array(
+                'title' => $schoolname,
+                'path' => 'all_entries/' . intval($id),
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'children' => array()
+            );
+        }
+        return $composedlist;
+    }
+
+    private function list_files($entryid)
+    {
+        $encoded = file_get_contents(self::apiurl . 'entry-files?entry_id=' . intval($entryid));
+        $files = json_decode($encoded, true);
+        foreach ($files as $file) {
+            $composedlist[] = array(
+                'title' => $file['file_name'] . ' (' . $this->format_filesize($file['file_size']) . ') .html',
+                'source' => $file['url'],
+                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Funknown-32&rev=217'
+            );
+        }
+        return $composedlist;
+    }
+
     public function search($text) {
-        $this->listing_search(array('search', "search_string=$text"));
+        $this->listing_search(array('search', '$text'));
         return $this->get_current_listing();
     }
+
+    private function format_filesize($bytes, $precision = 2) { 
+        $units = array('B', 'KB', 'MB', 'GB', 'TB'); 
+        $bytes = max($bytes, 0); 
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+        $pow = min($pow, count($units) - 1); 
+
+        // Uncomment one of the following alternatives
+        $bytes /= pow(1024, $pow);
+        // $bytes /= (1 << (10 * $pow)); 
+
+        return round($bytes, $precision) . ' ' . $units[$pow]; 
+    } 
 
     // will be called when installing a new plugin in admin panel
     /*
