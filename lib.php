@@ -246,6 +246,8 @@ class repository_eope_repository extends repository {
     }
 
     private function get_title($entry, $skipauthor=false) {
+        if (empty($entry['title']))
+            return 'Error: Invalid Entry';
         $title = $entry['title'];
         if (!$skipauthor)
             $title .= ' (' .
