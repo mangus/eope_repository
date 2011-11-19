@@ -218,6 +218,7 @@ class repository_eope_repository extends repository {
 
     private function list_schools($schools)
     {
+        $composedlist = array();
         foreach ($schools as $id => $schoolname) {
             $composedlist[] = array(
                 'title' => $schoolname,
@@ -231,6 +232,7 @@ class repository_eope_repository extends repository {
 
     private function list_files($entryid)
     {
+        $composedlist = array();
         $encoded = file_get_contents(self::apiurl . 'entry-files?entry_id=' . intval($entryid));
         $files = json_decode($encoded, true);
         foreach ($files as $file) {

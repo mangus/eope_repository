@@ -12,7 +12,7 @@ $string['repository'] = 'Repositoorium';
 $string['all_entries'] = 'Kõik sissekanded';
 $string['my_entries'] = 'Minu sissekanded';
 
-$string['search'] = 'Otsi';
+$string['search'] = 'Otsing';
 $string['author'] = 'Autor';
 $string['authors'] = 'Autorid';
 
