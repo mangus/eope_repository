@@ -107,12 +107,19 @@ class repository_eope_repository extends repository {
         // Building path
         $this->listing['path'] []= 
             array('name' => get_string('all_entries', 'repository_eope_repository'), 'path' => 'all_entries');
+
         if ($depth > 1) {
+            $encoded = file_get_contents(self::apiurl . 'get-school-name?school_id=' . intval($paths[1]));
+            $schoolname = json_decode($encoded, true);
             $this->listing['path'] []= 
-                array('name' => 'School Name', 'path' => 'all_entries/' . $paths[1]);
+                array('name' => $schoolname, 'path' => 'all_entries/' . $paths[1]);
             if ($depth > 2)
+            {
+                $encoded = file_get_contents(self::apiurl . 'get-entry?entry_id=' . intval($paths[2]));
+                $entry = json_decode($encoded, true);
                 $this->listing['path'] []= 
-                    array('name' => 'Entry Name', 'path' => 'all_entries/' . $paths[1] . '/' . $paths[2]);
+                    array('name' => $this->get_title($entry), 'path' => 'all_entries/' . $paths[1] . '/' . $paths[2]);
+            }
         }
     }
 
@@ -146,8 +153,10 @@ class repository_eope_repository extends repository {
         $this->listing['path'] []= 
             array('name' => get_string('my_entries', 'repository_eope_repository'), 'path' => 'my_entries');
         if ($depth > 1) {
+            $encoded = file_get_contents(self::apiurl . 'get-entry?entry_id=' . intval($paths[1]));
+            $entry = json_decode($encoded, true);
             $this->listing['path'] []= 
-                array('name' => 'Entry Name', 'path' => 'my_entries/' . $paths[1]);
+                array('name' => $this->get_title($entry, true), 'path' => 'my_entries/' . $paths[1]);
         }
     }
 
@@ -182,8 +191,10 @@ class repository_eope_repository extends repository {
             array('name' => get_string('search', 'repository_eope_repository') . ' "' . $paths[1] . '"',
                 'path' => 'search/' . $paths[1]);
         if ($depth > 2) {
+            $encoded = file_get_contents(self::apiurl . 'get-entry?entry_id=' . intval($paths[2]));
+            $entry = json_decode($encoded, true);
             $this->listing['path'] []= 
-                array('name' => 'Entry Name', 'path' => 'search/' . $paths[1] . '/' . $paths[2]);
+                array('name' => $this->get_title($entry), 'path' => 'search/' . $paths[1] . '/' . $paths[2]);
         }
     }
 
@@ -195,15 +206,8 @@ class repository_eope_repository extends repository {
     {
         $composedlist = array();
         foreach ($entries as $id => $entry) {
-            $title = $entry['title'];
-            if (!$skipauthor)
-                $title .= ' (' .
-                    (count($entry['authors']) == 1
-                        ? get_string('author', 'repository_eope_repository')
-                        : get_string('authors', 'repository_eope_repository')
-                    ) . ': ' . implode(', ', $entry['authors']) . ')';
             $composedlist[] = array(
-                'title' => $title,
+                'title' => $this->get_title($entry, $skipauthor),
                 'path' => $path . $id,
                 'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
                 'children' => array()
@@ -237,6 +241,17 @@ class repository_eope_repository extends repository {
             );
         }
         return $composedlist;
+    }
+
+    private function get_title($entry, $skipauthor=false) {
+        $title = $entry['title'];
+        if (!$skipauthor)
+            $title .= ' (' .
+                (count($entry['authors']) == 1
+                    ? get_string('author', 'repository_eope_repository')
+                    : get_string('authors', 'repository_eope_repository')
+                ) . ': ' . implode(', ', $entry['authors']) . ')';
+        return $title;
     }
 
     public function search($text) {
