@@ -23,8 +23,10 @@ class repository_eope_repository extends repository {
         if (substr($filename, -4) != '.html')
             $filename .= '.html';
         $path = $this->prepare_file($filename);
+
+        $processedurl = str_replace('+', '%20', $url); //urlencode()?
         $redirectcontent = file_get_contents($CFG->wwwroot . '/repository/eope_repository/repository-redirect.html');
-        $redirectcontent = str_replace('{{URL}}', $url, $redirectcontent);
+        $redirectcontent = str_replace('{{URL}}', $processedurl, $redirectcontent);
         file_put_contents($path, $redirectcontent);
         return array('path'=>$path, 'url'=>$url);
     }
@@ -135,9 +137,13 @@ class repository_eope_repository extends repository {
         switch ($depth)
         {
             case 1:
-                $encoded = file_get_contents(self::apiurl . 'user-entries?IK=' . $USER->idnumber);
-                $entries = json_decode($encoded, true);
-                $composedlist = $this->list_entries($entries, 'my_entries/', true);
+                if (empty($USER->idnumber))
+                    $composedlist = array();
+                else {
+                    $encoded = file_get_contents(self::apiurl . 'user-entries?IK=' . $USER->idnumber);
+                    $entries = json_decode($encoded, true);
+                    $composedlist = $this->list_entries($entries, 'my_entries/', true);
+                }
                 break;
 
             case 2:
