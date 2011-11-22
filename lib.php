@@ -147,7 +147,7 @@ class repository_eope_repository extends repository {
                 break;
 
             case 2:
-                $composedlist = $this->list_files($paths[2]);
+                $composedlist = $this->list_files($paths[1]);
                 break;
 
             default:
