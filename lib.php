@@ -66,14 +66,17 @@ class repository_eope_repository extends repository {
     }
 
     private function listing_start() {
+        global $OUTPUT;
         $itemslist = array(
             array('title' => get_string('my_entries', 'repository_eope_repository'),
                 'path' => 'my_entries',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'thumbnail' => '' . $OUTPUT->pix_url('f/folder-32'),
+                'thumbnail_width' => 240,
                 'children' => array()),
             array('title' => get_string('all_entries', 'repository_eope_repository'),
                 'path' => 'all_entries',
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'thumbnail' => '' . $OUTPUT->pix_url('f/folder-32'),
+                'thumbnail_width' => 240,
                 'children' => array())
         );
         $this->listing['list'] = $itemslist;
@@ -210,12 +213,14 @@ class repository_eope_repository extends repository {
 
     private function list_entries($entries, $path, $skipauthor = false)
     {
+        global $OUTPUT;
         $composedlist = array();
         foreach ($entries as $id => $entry) {
             $composedlist[] = array(
                 'title' => $this->get_title($entry, $skipauthor),
                 'path' => $path . $id,
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'thumbnail' => '' . $OUTPUT->pix_url('f/folder-32'),
+                'thumbnail_width' => 240,
                 'children' => array()
             );
         }
@@ -224,12 +229,14 @@ class repository_eope_repository extends repository {
 
     private function list_schools($schools)
     {
+        global $OUTPUT;
         $composedlist = array();
         foreach ($schools as $id => $schoolname) {
             $composedlist[] = array(
                 'title' => $schoolname,
                 'path' => 'all_entries/' . intval($id),
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Ffolder-32&rev=217',
+                'thumbnail' => '' . $OUTPUT->pix_url('f/folder-32'),
+                'thumbnail_width' => 240,
                 'children' => array()
             );
         }
@@ -238,6 +245,7 @@ class repository_eope_repository extends repository {
 
     private function list_files($entryid)
     {
+        global $OUTPUT;
         $composedlist = array();
         $encoded = file_get_contents(self::apiurl . 'entry-files?entry_id=' . intval($entryid));
         $files = json_decode($encoded, true);
@@ -245,7 +253,8 @@ class repository_eope_repository extends repository {
             $composedlist[] = array(
                 'title' => $file['file_name'] . ' (' . $this->format_filesize($file['file_size']) . ') .html',
                 'source' => $file['url'],
-                'thumbnail' => 'https://h1.moodle.e-ope.ee/theme/image.php?theme=anomaly&image=f%2Funknown-32&rev=217'
+                'thumbnail' => '' . $OUTPUT->pix_url('f/unknown-32'),
+                'thumbnail_width' => 240,
             );
         }
         return $composedlist;
