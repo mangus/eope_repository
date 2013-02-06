@@ -18,7 +18,7 @@ class repository_eope_repository extends repository {
         parent::__construct($repositoryid, $context, $options);
     }
 
-    function get_file($url, $filename) {
+    function get_file($url, $filename = '') {
         global $CFG;
         if (substr($filename, -4) != '.html')
             $filename .= '.html';
@@ -273,7 +273,7 @@ class repository_eope_repository extends repository {
         return $title;
     }
 
-    public function search($text) {
+    public function search($text, $page = 0) {
         $this->get_listing('search/' . $text);
         return $this->get_current_listing();
     }
